@@ -1,0 +1,90 @@
+<!DOCTYPE html>
+<html lang="he">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>המרת דיבור לטקסט</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            height: 100vh;
+            background-color: #f0f0f0;
+        }
+        #container {
+            text-align: center;
+            background: white;
+            padding: 20px;
+            border-radius: 10px;
+            box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
+            width: 80%;
+            max-width: 600px;
+        }
+        #output {
+            font-size: 20px;
+            padding: 20px;
+            border: 1px solid black;
+            margin-top: 10px;
+            min-height: 50px;
+            max-height: 150px;
+            overflow: hidden;
+            text-align: right;
+        }
+        #startButton {
+            font-size: 18px;
+            padding: 10px 20px;
+            margin-top: 10px;
+            background: #4CAF50;
+            color: white;
+            border: none;
+            border-radius: 5px;
+            cursor: pointer;
+        }
+        #startButton:hover {
+            background: #45a049;
+        }
+    </style>
+</head>
+<body>
+    <div id="container">
+        <h1>המרת דיבור לטקסט</h1>
+        <div id="output">התחל לדבר...</div>
+        <button id="startButton">התחל להאזין</button>
+    </div>
+    
+    <script>
+        window.SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
+        const recognition = new SpeechRecognition();
+        recognition.lang = 'he-IL';
+        recognition.interimResults = false; // מניעת כפילויות
+        
+        const output = document.getElementById('output');
+        const startButton = document.getElementById('startButton');
+        let wordsArray = [];
+        const maxWords = 50;
+        
+        startButton.addEventListener('click', () => {
+            recognition.start();
+            output.textContent = 'מקשיב...';
+        });
+        
+        recognition.onresult = (event) => {
+            let transcript = event.results[event.results.length - 1][0].transcript;
+            let newWords = transcript.trim().split(/\s+/);
+            wordsArray = wordsArray.concat(newWords);
+            
+            while (wordsArray.length > maxWords) {
+                wordsArray.shift(); // הסרת המילים הראשונות כדי לשמור רק 50 מילים
+            }
+            
+            output.textContent = wordsArray.join(' ');
+        };
+        
+        recognition.onerror = (event) => {
+            output.textContent = 'שגיאה: ' + event.error;
+        };
+    </script>
+</body>
+</html>
