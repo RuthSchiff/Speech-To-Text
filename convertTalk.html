@@ -6,37 +6,41 @@
     <title>המרת דיבור לטקסט</title>
     <style>
         body {
-            font-family: Arial, sans-serif;
+            font-family: Arial, Helvetica, sans-serif;
             display: flex;
             justify-content: center;
             align-items: center;
             height: 100vh;
-            background: linear-gradient(to right, #45f745, #64cbdb , #4ca1af ,  #e8230d);
+            background: linear-gradient(to right, #45f745, #64cbdb, #4ca1af, #e8230d);
             margin: 0;
             direction: rtl;
             color: white;
         }
+       
         #container {
-          
             text-align: center;
             background: white;
             padding: 20px;
             border-radius: 10px;
-            box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
+            box-shadow: 0 0 10px rgba(0, 0, 0, 0.3);
             width: 80%;
             color: #115111;
             max-width: 600px;
         }
+
         #output {
             font-size: 20px;
-            padding: 20px;
+            padding: 15px;
             border: 1px solid black;
             margin-top: 10px;
             min-height: 50px;
             max-height: 150px;
             overflow-y: auto;
             text-align: right;
+            white-space: pre-line;
+            font-family: Arial, Helvetica, sans-serif;
         }
+
         .button {
             font-size: 18px;
             padding: 10px 20px;
@@ -46,17 +50,24 @@
             border-radius: 5px;
             cursor: pointer;
         }
-        #startButton {
-            background: #4CAF50;
-        }
-        #startButton:hover {
-            background: #45a049;
-        }
-        #stopButton {
-            background: #f44336;
-        }
-        #stopButton:hover {
-            background: #d32f2f;
+
+        #startButton { background: #4CAF50; }
+        #startButton:hover { background: #45a049; }
+
+        #stopButton { background: #f44336; }
+        #stopButton:hover { background: #d32f2f; }
+
+        #copyButton { background: #ff9800; }
+        #copyButton:hover { background: #e68900; }
+
+        #translateButton { background: #3f51b5; }
+        #translateButton:hover { background: #32408f; }
+
+        #languageSelect {
+            font-size: 16px;
+            padding: 5px;
+            margin: 10px;
+            border-radius: 5px;
         }
     </style>
 </head>
@@ -66,18 +77,34 @@
         <div id="output">התחל לדבר...</div>
         <button id="startButton" class="button">התחל להאזין</button>
         <button id="stopButton" class="button">עצור האזנה</button>
+        <button id="copyButton" class="button">📋 העתק טקסט</button>
+        
+        <br>
+        <select id="languageSelect">
+            <option value="en">אנגלית</option>
+            <option value="fr">צרפתית</option>
+            <option value="es">ספרדית</option>
+            <option value="de">גרמנית</option>
+            <option value="ru">רוסית</option>
+            <option value="ar">ערבית</option>
+        </select>
+        <button id="translateButton" class="button">🔄 תרגם</button>
     </div>
     
     <script>
         window.SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
         const recognition = new SpeechRecognition();
         recognition.lang = 'he-IL';
-        recognition.interimResults = true; // הצגת טקסט בזמן אמת
-        recognition.continuous = true; // ממשיך להאזין עד שעוצרים ידנית
-        
+        recognition.interimResults = true;
+        recognition.continuous = true;
+
         const output = document.getElementById('output');
         const startButton = document.getElementById('startButton');
         const stopButton = document.getElementById('stopButton');
+        const copyButton = document.getElementById('copyButton');
+        const translateButton = document.getElementById('translateButton');
+        const languageSelect = document.getElementById('languageSelect');
+
         let finalTranscript = '';
 
         startButton.addEventListener('click', () => {
@@ -87,9 +114,9 @@
 
         stopButton.addEventListener('click', () => {
             recognition.stop();
-            output.textContent = 'האזנה הופסקה.';
+            output.textContent = finalTranscript || 'לא זוהה טקסט.';
         });
-        
+
         recognition.onresult = (event) => {
             let interimTranscript = '';
             finalTranscript = '';
@@ -103,12 +130,41 @@
                 }
             }
 
-            output.textContent = finalTranscript + interimTranscript; // מציג את הטקסט בזמן אמת
+            output.textContent = finalTranscript + interimTranscript;
         };
-        
+
         recognition.onerror = (event) => {
             output.textContent = 'שגיאה: ' + event.error;
         };
+
+        copyButton.addEventListener('click', () => {
+            navigator.clipboard.writeText(output.textContent).then(() => {
+                alert("הטקסט הועתק בהצלחה!");
+            }).catch(err => {
+                console.error("שגיאה בהעתקה", err);
+            });
+        });
+
+        translateButton.addEventListener('click', async () => {
+            const selectedLang = languageSelect.value;
+            if (!output.textContent.trim()) {
+                alert("אין טקסט לתרגום.");
+                return;
+            }
+
+            const url = `https://api.mymemory.translated.net/get?q=${encodeURIComponent(output.textContent)}&langpair=he|${selectedLang}`;
+            
+            try {
+                const response = await fetch(url);
+                const data = await response.json();
+                const translatedText = data.responseData.translatedText;
+                output.textContent = translatedText;
+            } catch (error) {
+                alert("שגיאה בתרגום.");
+                console.error(error);
+            }
+        });
+
     </script>
 </body>
 </html>
