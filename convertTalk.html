@@ -29,21 +29,29 @@
             margin-top: 10px;
             min-height: 50px;
             max-height: 150px;
-            overflow: hidden;
+            overflow-y: auto;
             text-align: right;
         }
-        #startButton {
+        .button {
             font-size: 18px;
             padding: 10px 20px;
-            margin-top: 10px;
-            background: #4CAF50;
+            margin: 10px;
             color: white;
             border: none;
             border-radius: 5px;
             cursor: pointer;
         }
+        #startButton {
+            background: #4CAF50;
+        }
         #startButton:hover {
             background: #45a049;
+        }
+        #stopButton {
+            background: #f44336;
+        }
+        #stopButton:hover {
+            background: #d32f2f;
         }
     </style>
 </head>
@@ -51,35 +59,46 @@
     <div id="container">
         <h1>המרת דיבור לטקסט</h1>
         <div id="output">התחל לדבר...</div>
-        <button id="startButton">התחל להאזין</button>
+        <button id="startButton" class="button">התחל להאזין</button>
+        <button id="stopButton" class="button">עצור האזנה</button>
     </div>
     
     <script>
         window.SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
         const recognition = new SpeechRecognition();
         recognition.lang = 'he-IL';
-        recognition.interimResults = false; // מניעת כפילויות
+        recognition.interimResults = true; // הצגת טקסט בזמן אמת
+        recognition.continuous = true; // ממשיך להאזין עד שעוצרים ידנית
         
         const output = document.getElementById('output');
         const startButton = document.getElementById('startButton');
-        let wordsArray = [];
-        const maxWords = 50;
-        
+        const stopButton = document.getElementById('stopButton');
+        let finalTranscript = '';
+
         startButton.addEventListener('click', () => {
             recognition.start();
             output.textContent = 'מקשיב...';
         });
+
+        stopButton.addEventListener('click', () => {
+            recognition.stop();
+            output.textContent = 'האזנה הופסקה.';
+        });
         
         recognition.onresult = (event) => {
-            let transcript = event.results[event.results.length - 1][0].transcript;
-            let newWords = transcript.trim().split(/\s+/);
-            wordsArray = wordsArray.concat(newWords);
-            
-            while (wordsArray.length > maxWords) {
-                wordsArray.shift(); // הסרת המילים הראשונות כדי לשמור רק 50 מילים
+            let interimTranscript = '';
+            finalTranscript = '';
+
+            for (let i = 0; i < event.results.length; i++) {
+                let transcript = event.results[i][0].transcript;
+                if (event.results[i].isFinal) {
+                    finalTranscript += transcript + ' ';
+                } else {
+                    interimTranscript += transcript + ' ';
+                }
             }
-            
-            output.textContent = wordsArray.join(' ');
+
+            output.textContent = finalTranscript + interimTranscript; // מציג את הטקסט בזמן אמת
         };
         
         recognition.onerror = (event) => {
