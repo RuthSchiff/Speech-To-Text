@@ -3,6 +3,8 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <link rel="🎤">
+    <link rel="icon" type="Image_icone" href="../pictures/logo_icon.png">
     <title>המרת דיבור לטקסט</title>
     <style>
         body {
@@ -92,37 +94,44 @@
     </div>
     
     <script>
+        //הגדרת SpeechRecognition API
+        //שימוש ב - SpeechRecognition או webkitSpeechRecognition בהתאם לדפדפן
         window.SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
         const recognition = new SpeechRecognition();
+        // הגדרת שפה עברית
         recognition.lang = 'he-IL';
+        //הגדרה תוצאת ביניים
         recognition.interimResults = true;
+        //הגדרה להקשבה רציפה
         recognition.continuous = true;
+ 
+        const output = document.getElementById('output'); //תיבת התצוגה לטקסט
+        const startButton = document.getElementById('startButton');//כפתור התחלה
+        const stopButton = document.getElementById('stopButton');//כפתור עצירה
+        const copyButton = document.getElementById('copyButton');//כפתור העתקה
+        const translateButton = document.getElementById('translateButton');//כפתור תרגום
+        const languageSelect = document.getElementById('languageSelect');//תיבת בחירת שפה
 
-        const output = document.getElementById('output');
-        const startButton = document.getElementById('startButton');
-        const stopButton = document.getElementById('stopButton');
-        const copyButton = document.getElementById('copyButton');
-        const translateButton = document.getElementById('translateButton');
-        const languageSelect = document.getElementById('languageSelect');
+        // הגדרת משתנה לאחסון טקסט סופי
 
         let finalTranscript = '';
-
+        //התחלת האזנה
         startButton.addEventListener('click', () => {
             recognition.start();
-            output.textContent = 'מקשיב...';
+            output.textContent = 'מקשיב...';//עידכון תיבת תצוגה
         });
-
+        //עצירת האזנה לדיבור
         stopButton.addEventListener('click', () => {
             recognition.stop();
             output.textContent = finalTranscript || 'לא זוהה טקסט.';
         });
-
+        //טיפול באירועי זיהוי דיבור
         recognition.onresult = (event) => {
-            let interimTranscript = '';
-            finalTranscript = '';
-
+            let interimTranscript = ''; //טקסט ביניים
+            finalTranscript = '';//איפוס טקסט סופי
+        //עיבוד תוצאות זיהוי דיבור
             for (let i = 0; i < event.results.length; i++) {
-                let transcript = event.results[i][0].transcript;
+                let transcript = event.results[i][0].transcript;//תמלול
                 if (event.results[i].isFinal) {
                     finalTranscript += transcript + ' ';
                 } else {
@@ -130,13 +139,13 @@
                 }
             }
 
-            output.textContent = finalTranscript + interimTranscript;
+            output.textContent = finalTranscript + interimTranscript;//התצוגה
         };
-
+        //טיפןל בשגיאות זיהוי
         recognition.onerror = (event) => {
             output.textContent = 'שגיאה: ' + event.error;
         };
-
+       //העתקת טקסט ללוח
         copyButton.addEventListener('click', () => {
             navigator.clipboard.writeText(output.textContent).then(() => {
                 alert("הטקסט הועתק בהצלחה!");
@@ -144,14 +153,14 @@
                 console.error("שגיאה בהעתקה", err);
             });
         });
-
+        //תרגום טקסט לשפה שנבחרה
         translateButton.addEventListener('click', async () => {
             const selectedLang = languageSelect.value;
             if (!output.textContent.trim()) {
                 alert("אין טקסט לתרגום.");
                 return;
             }
-
+            //שימוש ב-API של MyMemory לתרגום
             const url = `https://api.mymemory.translated.net/get?q=${encodeURIComponent(output.textContent)}&langpair=he|${selectedLang}`;
             
             try {
